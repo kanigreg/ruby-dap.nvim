@@ -6,59 +6,6 @@ local function load_module(module_name)
   return module
 end
 
---[[ HOW TO DEBUG
-create script a.rb to debug
-
-```
-  foo = 1
-  binding.break
-  bar = 2
-  baz = 3
-  puts "finish"
-```
-
-run the following command
-```
-rdbg --open --port 38698 -n -- a.rb
-```
-
-run
-```
-nvim a.rb
-:lua require'dap'.continue()
-:lua require'dap'.repl.open()
-```
-
-nvim-dap log files is .cache/nvim/dap.log
-nvim-dap log files is .cache/nvim/dap.log
-]]
-
--- To DEBUG, change '--[[ DEBUG SETTING' => '-- [[ DEBUG SETTING'
---[[ DEBUG SETTING
-local function setup_ruby_adapter(dap)
-  dap.adapters.ruby = function(callback, config)
-    callback({type = "server", host = config.server, port = config.port})
-  end
-end
-
-local function setup_ruby_configuration(dap)
-  dap.set_log_level('TRACE')
-  dap.configurations.ruby = {
-    {
-       type = 'ruby';
-       name = 'debug current file';
-       port = 38698;
-       server = '127.0.0.1';
-       request = 'attach';
-    }
-  }
-end
--- ]]
--- END OF DEBUG SETTING
--- END for nvim-dap-ruby debug
-
--- TO DEBUG, CHANGE '-- [[ => '--[['
--- [[
 local function setup_ruby_adapter(dap)
   dap.adapters.ruby = function(callback, config)
     local handle
@@ -78,7 +25,7 @@ local function setup_ruby_adapter(dap)
     if config.bundle == "bundle" then
       args = { "-n", "--open", "--port", config.port, "-c", "--", "bundle", "exec", config.command, script }
     else
-      args = { "--open", "--port", config.port, "-c", "--", config.command, script }
+      args = { 'exec', 'rdbg', "--open", "--port", config.port, "-c", "--", config.command, script }
     end
 
     local opts = {
@@ -90,7 +37,7 @@ local function setup_ruby_adapter(dap)
     if vim.fn.has("win32") == 1 or vim.fn.has("win64") == 1 then
       rdbg = "rdbg.bat"
     else
-      rdbg = "rdbg"
+      rdbg = config.bundle == "bundle" and 'bandle' or 'rdbg'
     end
 
     handle, pid_or_err = vim.loop.spawn(rdbg, opts, function(code)
@@ -121,36 +68,6 @@ end
 
 local function setup_ruby_configuration(dap)
   dap.configurations.ruby = {
-    {
-      type = "ruby",
-      name = "run rails",
-      bundle = "bundle",
-      request = "attach",
-      command = "rails",
-      script = "s",
-      port = 38698,
-      server = "127.0.0.1",
-      options = {
-        source_filetype = "ruby",
-      },
-      localfs = true,
-      waiting = 1000,
-    },
-    {
-      type = "ruby",
-      name = "debug current file",
-      bundle = "",
-      request = "attach",
-      command = "ruby",
-      script = "${file}",
-      port = 38698,
-      server = "127.0.0.1",
-      options = {
-        source_filetype = "ruby",
-      },
-      localfs = true,
-      waiting = 1000,
-    },
     {
       type = "ruby",
       name = "run rspec current_file",
@@ -189,6 +106,36 @@ local function setup_ruby_configuration(dap)
       request = "attach",
       command = "rspec",
       script = "./spec",
+      port = 38698,
+      server = "127.0.0.1",
+      options = {
+        source_filetype = "ruby",
+      },
+      localfs = true,
+      waiting = 1000,
+    },
+    {
+      type = "ruby",
+      name = "run rails",
+      bundle = "bundle",
+      request = "attach",
+      command = "rails",
+      script = "s",
+      port = 38698,
+      server = "127.0.0.1",
+      options = {
+        source_filetype = "ruby",
+      },
+      localfs = true,
+      waiting = 1000,
+    },
+    {
+      type = "ruby",
+      name = "debug current file",
+      bundle = "",
+      request = "attach",
+      command = "ruby",
+      script = "${file}",
       port = 38698,
       server = "127.0.0.1",
       options = {
